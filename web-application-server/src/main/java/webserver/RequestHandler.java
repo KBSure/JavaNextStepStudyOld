@@ -3,6 +3,7 @@ package webserver;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.Map;
 
 import model.User;
@@ -36,6 +37,15 @@ public class RequestHandler extends Thread {
             String method = HttpRequestUtils.getMethod(line);
             String path = HttpRequestUtils.getUrl(line);
 
+            Map<String, String> headers = new HashMap<>();
+            while(!"".equals(line)){
+                log.debug("headers: {}", line);
+                line = br.readLine();
+                String[] splited = line.split(":");
+                if(splited.length == 2)
+                headers.put(splited[0].trim(), splited[1].trim());
+            }
+
             if("GET".equals(method)) {
                 int index = path.indexOf("?");
                 if (path.startsWith("/user/create")) {
@@ -47,13 +57,7 @@ public class RequestHandler extends Thread {
                     path = "/index.html";
                 }
             }else if("POST".equals(method)){
-                int contentLength = 0;
-                while(!"".equals(line = br.readLine())){
-                    if(line.startsWith("Content-Length")) {
-                        String[] splited = line.split(":");
-                        contentLength = Integer.parseInt(splited[1].trim());
-                    }
-                }
+                int contentLength = Integer.parseInt(headers.get("Content-Length"));
                 String queryString = IOUtils.readData(br, contentLength);
                 Map<String, String> queryStringMap = HttpRequestUtils.parseQueryString(queryString);
                 User user = new User(queryStringMap.get("userId"), queryStringMap.get("password"), queryStringMap.get("name"), queryStringMap.get("email"));
