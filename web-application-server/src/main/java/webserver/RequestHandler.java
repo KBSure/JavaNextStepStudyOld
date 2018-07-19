@@ -33,7 +33,7 @@ public class RequestHandler extends Thread {
             String path = HttpRequestUtils.getUrl(line);
 
             DataOutputStream dos = new DataOutputStream(out);
-            byte[] body = Files.readAllBytes(new File("webapp" + path).toPath());
+            byte[] body = Files.readAllBytes(new File("web-application-server/webapp" + path).toPath());
             response200Header(dos, body.length);
             responseBody(dos, body);
         } catch (IOException e) {
