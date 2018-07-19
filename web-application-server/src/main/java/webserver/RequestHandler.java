@@ -28,6 +28,7 @@ public class RequestHandler extends Thread {
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
             //index.html 요청하는 path
+            DataOutputStream dos = new DataOutputStream(out);
             BufferedReader br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
             String line = br.readLine();
             if(line == null){
@@ -53,26 +54,36 @@ public class RequestHandler extends Thread {
                     Map<String, String> paramMap = HttpRequestUtils.parseQueryString(param);
                     User user = new User(paramMap.get("userId"), paramMap.get("password"), paramMap.get("name"), paramMap.get("email"));
                     log.debug("User : {}", user);
-
-                    path = "/index.html";
+                    response302Header(dos, "/index.html");
                 }
             }else if("POST".equals(method)){
-                int contentLength = Integer.parseInt(headers.get("Content-Length"));
-                String queryString = IOUtils.readData(br, contentLength);
-                Map<String, String> queryStringMap = HttpRequestUtils.parseQueryString(queryString);
-                User user = new User(queryStringMap.get("userId"), queryStringMap.get("password"), queryStringMap.get("name"), queryStringMap.get("email"));
-                log.debug("User : {}", user);
-
-                path = "/index.html";
+                if (path.startsWith("/user/create")) {
+                    int contentLength = Integer.parseInt(headers.get("Content-Length"));
+                    String queryString = IOUtils.readData(br, contentLength);
+                    Map<String, String> queryStringMap = HttpRequestUtils.parseQueryString(queryString);
+                    User user = new User(queryStringMap.get("userId"), queryStringMap.get("password"), queryStringMap.get("name"), queryStringMap.get("email"));
+                    log.debug("User : {}", user);
+                    response302Header(dos, "/index.html");
+                }
             }
 
-
-            DataOutputStream dos = new DataOutputStream(out);
             byte[] body = Files.readAllBytes(new File("web-application-server/webapp" + path).toPath());
             response200Header(dos, body.length);
             responseBody(dos, body);
         } catch (IOException e) {
             log.error(e.getMessage());
+        }
+    }
+
+    private void response302Header(DataOutputStream dos, String path){
+        try {
+            dos.writeBytes("HTTP/1.1 302 OK \r\n");
+            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Location: " + path);
+//            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
