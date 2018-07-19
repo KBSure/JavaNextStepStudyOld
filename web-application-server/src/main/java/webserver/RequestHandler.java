@@ -9,6 +9,7 @@ import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.HttpRequestUtils;
+import util.IOUtils;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -32,13 +33,30 @@ public class RequestHandler extends Thread {
                 return;
             }
 
+            String method = HttpRequestUtils.getMethod(line);
             String path = HttpRequestUtils.getUrl(line);
 
-            int index = path.indexOf("?");
-            if(path.startsWith("/user/create")){
-                String param = path.substring(index + 1);
-                Map<String, String> paramMap = HttpRequestUtils.parseQueryString(param);
-                User user = new User(paramMap.get("userId"), paramMap.get("password"), paramMap.get("name"), paramMap.get("email"));
+            if("GET".equals(method)) {
+                int index = path.indexOf("?");
+                if (path.startsWith("/user/create")) {
+                    String param = path.substring(index + 1);
+                    Map<String, String> paramMap = HttpRequestUtils.parseQueryString(param);
+                    User user = new User(paramMap.get("userId"), paramMap.get("password"), paramMap.get("name"), paramMap.get("email"));
+                    log.debug("User : {}", user);
+
+                    path = "/index.html";
+                }
+            }else if("POST".equals(method)){
+                int contentLength = 0;
+                while(!"".equals(line = br.readLine())){
+                    if(line.startsWith("Content-Length")) {
+                        String[] splited = line.split(":");
+                        contentLength = Integer.parseInt(splited[1].trim());
+                    }
+                }
+                String queryString = IOUtils.readData(br, contentLength);
+                Map<String, String> queryStringMap = HttpRequestUtils.parseQueryString(queryString);
+                User user = new User(queryStringMap.get("userId"), queryStringMap.get("password"), queryStringMap.get("name"), queryStringMap.get("email"));
                 log.debug("User : {}", user);
 
                 path = "/index.html";
@@ -50,7 +68,6 @@ public class RequestHandler extends Thread {
             response200Header(dos, body.length);
             responseBody(dos, body);
         } catch (IOException e) {
-            e.printStackTrace();
             log.error(e.getMessage());
         }
     }
