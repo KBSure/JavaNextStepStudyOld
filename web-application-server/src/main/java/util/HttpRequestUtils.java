@@ -6,6 +6,11 @@ import java.util.stream.Collectors;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import webserver.RequestHandler;
+
+import static jdk.nashorn.internal.runtime.regexp.joni.Config.log;
 
 public class HttpRequestUtils {
     /**
@@ -22,6 +27,17 @@ public class HttpRequestUtils {
      *            값은 name1=value1; name2=value2 형식임
      * @return
      */
+
+    private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
+
+
+    public static String getUrl(String line){
+        String[] splited = line.split(" ");
+        String path = splited[1];
+        log.debug("request path : {}", path);
+        return path;
+    }
+
     public static Map<String, String> parseCookies(String cookies) {
         return parseValues(cookies, ";");
     }
