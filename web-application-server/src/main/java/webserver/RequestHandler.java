@@ -3,7 +3,9 @@ package webserver;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.util.Map;
 
+import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.HttpRequestUtils;
@@ -31,6 +33,17 @@ public class RequestHandler extends Thread {
             }
 
             String path = HttpRequestUtils.getUrl(line);
+
+            int index = path.indexOf("?");
+            if(path.startsWith("/user/create")){
+                String param = path.substring(index + 1);
+                Map<String, String> paramMap = HttpRequestUtils.parseQueryString(param);
+                User user = new User(paramMap.get("userId"), paramMap.get("password"), paramMap.get("name"), paramMap.get("email"));
+                log.debug("User : {}", user);
+
+                path = "/index.html";
+            }
+
 
             DataOutputStream dos = new DataOutputStream(out);
             byte[] body = Files.readAllBytes(new File("web-application-server/webapp" + path).toPath());

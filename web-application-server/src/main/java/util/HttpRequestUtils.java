@@ -30,7 +30,6 @@ public class HttpRequestUtils {
 
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
-
     public static String getUrl(String line){
         String[] splited = line.split(" ");
         String path = splited[1];
