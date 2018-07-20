@@ -4,9 +4,11 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.sql.DatabaseMetaData;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import db.DataBase;
 import model.User;
 import org.slf4j.Logger;
@@ -51,7 +53,8 @@ public class RequestHandler extends Thread {
                 headers.put(splited[0].trim(), splited[1].trim());
             }
 
-            boolean isLogin = headers.get("Cookie").startsWith("logined=true");
+            Map<String, String> cookies = HttpRequestUtils.parseCookies(headers.get("Cookie"));
+            boolean isLogin = Boolean.parseBoolean(cookies.get("logined"));
 
             if (path.startsWith("/user/create")) {
                 if ("GET".equals(method)) {
@@ -92,6 +95,31 @@ public class RequestHandler extends Thread {
 //                    response302Header(dos, true, );
 //                    responseBody(dos, body);
                     return;
+                }
+            }else if(path.startsWith("/user/list")){
+                if("GET".equals(method)){
+                    //로그인 되어 있으면 넘기고 안되어있으면 로그인 페이지
+                    if(isLogin){
+//                        byte[] body = Files.readAllBytes(new File("web-application-server/webapp/user/list.html").toPath());
+//                        response200Header(dos, false, body.length); //수정 필요
+//                        responseBody(dos, body);
+                        Collection<User> users = DataBase.findAll();
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("<table border='1'>");
+                        for(User user : users){
+                            sb.append("<tr>");
+                            sb.append("<td>"+user.getUserId()+"</td>");
+                            sb.append("<td>"+user.getName()+"</td>");
+                            sb.append("<td>"+user.getEmail()+"</td>");
+                            sb.append("</tr>");
+                        }
+                        sb.append("</table>");
+                        byte[] body = sb.toString().getBytes();
+                        response200Header(dos, isLogin, body.length);
+                        responseBody(dos, body);
+                    }else if(!isLogin){
+                        response302Header(dos, false, "/user/login");
+                    }
                 }
             }
 
