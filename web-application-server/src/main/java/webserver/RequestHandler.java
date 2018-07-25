@@ -64,19 +64,17 @@ public class RequestHandler extends Thread {
                     User user = new User(paramMap.get("userId"), paramMap.get("password"), paramMap.get("name"), paramMap.get("email"));
                     log.debug("User : {}", user);
                     DataBase.addUser(user);
-                    response302Header(dos, isLogin, "/index.html");
+                    response302Header(dos, "/index.html");
                     return;
                 }else if("POST".equals(method)){
-                    if (path.startsWith("/user/create")) {
                         int contentLength = Integer.parseInt(headers.get("Content-Length"));
                         String queryString = IOUtils.readData(br, contentLength);
                         Map<String, String> queryStringMap = HttpRequestUtils.parseQueryString(queryString);
                         User user = new User(queryStringMap.get("userId"), queryStringMap.get("password"), queryStringMap.get("name"), queryStringMap.get("email"));
                         log.debug("User : {}", user);
                         DataBase.addUser(user);
-                        response302Header(dos, isLogin,"/index.html");
+                        response302Header(dos, "/index.html");
                         return;
-                    }
                 }
             }else if(path.startsWith("/user/login")){
                 if ("POST".equals(method)){
@@ -86,9 +84,9 @@ public class RequestHandler extends Thread {
                     Map<String, String> queryStringMap = HttpRequestUtils.parseQueryString(queryString);
                     log.debug("userId : {}, password : {}", queryStringMap.get("userId"), queryStringMap.get("password"));
                     if(isLogin(queryStringMap.get("userId"), queryStringMap.get("password"))){
-                        response302Header(dos, true, "/index.html");
+                        response302HeaderWithLogined(dos, true, "/index.html");
                     }else{
-                        response302Header(dos, false, "/user/login_failed.html");
+                        response302HeaderWithLogined(dos, false, "/user/login_failed.html");
                     }
                     //로그인 성공 응답 테스트
 //                    byte[] body = Files.readAllBytes(new File("web-application-server/webapp" + "/index.html").toPath());
@@ -118,7 +116,7 @@ public class RequestHandler extends Thread {
                         response200Header(dos, isLogin, body.length);
                         responseBody(dos, body);
                     }else if(!isLogin){
-                        response302Header(dos, false, "/user/login");
+                        path = "/user/login.html";
                     }
                 }
             }
@@ -147,7 +145,18 @@ public class RequestHandler extends Thread {
     }
 
 
-    private void response302Header(DataOutputStream dos, boolean isLogin, String path){
+    private void response302Header(DataOutputStream dos, String path){
+        try {
+            dos.writeBytes("HTTP/1.1 302 OK \r\n");
+            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Location: " + path +"\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void response302HeaderWithLogined(DataOutputStream dos, boolean isLogin, String path){
         try {
             dos.writeBytes("HTTP/1.1 302 OK \r\n");
             dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
