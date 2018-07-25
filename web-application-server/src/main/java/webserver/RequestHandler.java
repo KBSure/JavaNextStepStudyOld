@@ -113,7 +113,7 @@ public class RequestHandler extends Thread {
                         }
                         sb.append("</table>");
                         byte[] body = sb.toString().getBytes();
-                        response200Header(dos, isLogin, body.length);
+                        response200Header(dos, headers, body.length);
                         responseBody(dos, body);
                     }else if(!isLogin){
                         response302Header(dos, "/user/login.html");
@@ -122,7 +122,7 @@ public class RequestHandler extends Thread {
             }
 
             byte[] body = Files.readAllBytes(new File("web-application-server/webapp" + path).toPath());
-            response200Header(dos, false, body.length); //수정 필요
+            response200Header(dos, headers, body.length); //수정 필요
             responseBody(dos, body);
         } catch (IOException e) {
             log.error(e.getMessage());
@@ -172,10 +172,10 @@ public class RequestHandler extends Thread {
         }
     }
 
-    private void response200Header(DataOutputStream dos, boolean isLogin, int lengthOfBodyContent) {
+    private void response200Header(DataOutputStream dos, Map<String, String> headers, int lengthOfBodyContent) {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Content-Type: " + headers.get("Accept") + ";charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
