@@ -116,7 +116,7 @@ public class RequestHandler extends Thread {
                         response200Header(dos, isLogin, body.length);
                         responseBody(dos, body);
                     }else if(!isLogin){
-                        path = "/user/login.html";
+                        response302Header(dos, "/user/login.html");
                     }
                 }
             }
